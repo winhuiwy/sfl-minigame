@@ -1,11 +1,8 @@
-import React from "react";
-
-import { PortalProvider } from "./example/lib/PortalProvider";
-import { Ocean } from "features/world/ui/Ocean";
-
 import { WalletProvider } from "features/wallet/WalletProvider";
-
-import { PortalExample } from "./example/PortalExample";
+import React from "react";
+import { PortalProvider } from "./minigame/lib/PortalProvider";
+import { PortalExample } from "./minigame/PortalExample";
+import { MinigameBackground } from "./minigame/PortalBackground";
 
 export const PortalApp: React.FC = () => {
   return (
@@ -13,9 +10,9 @@ export const PortalApp: React.FC = () => {
     <WalletProvider>
       {/* PortalProvider - gives you access to a xstate machine which handles state management */}
       <PortalProvider>
-        <Ocean>
+        <MinigameBackground>
           <PortalExample />
-        </Ocean>
+        </MinigameBackground>
       </PortalProvider>
     </WalletProvider>
   );
