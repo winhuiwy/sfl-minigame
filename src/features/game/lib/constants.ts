@@ -17,7 +17,6 @@ import { INITIAL_REWARDS } from "../types/rewards";
 import { makeAnimalBuilding } from "./animals";
 import { ChoreBoard } from "../types/choreBoard";
 import { getSeasonalTicket } from "../types/seasons";
-import { hasFeatureAccess } from "lib/flags";
 import { CROP_SEEDS } from "../types/crops";
 import { PATCH_FRUIT_SEEDS } from "../types/fruits";
 
@@ -136,6 +135,7 @@ export const INITIAL_STOCK = (
     tools.Pickaxe = tools.Pickaxe.add(new Decimal(70));
     tools["Stone Pickaxe"] = tools["Stone Pickaxe"].add(new Decimal(20));
     tools["Iron Pickaxe"] = tools["Iron Pickaxe"].add(new Decimal(7));
+    tools["Gold Pickaxe"] = tools["Gold Pickaxe"].add(new Decimal(2));
   }
 
   const seeds: Record<SeedName, Decimal> = {
@@ -198,13 +198,11 @@ export const INITIAL_STOCK = (
     );
   }
 
-  if (state && hasFeatureAccess(state, "SEASONAL_SEEDS")) {
-    getKeys(seeds).forEach((seed) => {
-      if (seed in CROP_SEEDS || seed in PATCH_FRUIT_SEEDS) {
-        seeds[seed] = new Decimal(Math.ceil(seeds[seed].mul(2).toNumber()));
-      }
-    });
-  }
+  getKeys(seeds).forEach((seed) => {
+    if (seed in CROP_SEEDS || seed in PATCH_FRUIT_SEEDS) {
+      seeds[seed] = new Decimal(Math.ceil(seeds[seed].mul(2).toNumber()));
+    }
+  });
 
   return {
     // Tools

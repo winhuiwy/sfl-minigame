@@ -9,15 +9,32 @@ import {
   INITIAL_STOCK,
 } from "./constants";
 import { INITIAL_REWARDS } from "../types/rewards";
-import { makeAnimalBuilding } from "./animals";
 import { Equipped } from "../types/bumpkin";
 import { tokenUriBuilder } from "lib/utils/tokenUriBuilder";
 
 export const STATIC_OFFLINE_FARM: GameState = {
+  username: "Local Hero",
   coins: 10000,
   balance: new Decimal(0),
   previousBalance: new Decimal(0),
+  vip: {
+    bundles: [{ name: "1_MONTH", boughtAt: Date.now() }],
+    expiresAt: Date.now() + 31 * 24 * 60 * 60 * 1000,
+  },
   inventory: {
+    Potato: new Decimal(100),
+    Rhubarb: new Decimal(100),
+    "Sunpetal Seed": new Decimal(1),
+    "Bloom Seed": new Decimal(1),
+    "Lily Seed": new Decimal(1),
+    "Edelweiss Seed": new Decimal(1),
+    "Gladiolus Seed": new Decimal(1),
+    "Lavender Seed": new Decimal(1),
+    "Clover Seed": new Decimal(1),
+    "Celestial Frostbloom": new Decimal(1),
+    "Royal Ornament": new Decimal(1),
+    "Fruit Patch": new Decimal(1),
+    "Lunara Seed": new Decimal(1),
     Obsidian: new Decimal(20),
     Jellyfish: new Decimal(1),
     Chamomile: new Decimal(1),
@@ -32,6 +49,7 @@ export const STATIC_OFFLINE_FARM: GameState = {
     Market: new Decimal(1),
     Workbench: new Decimal(1),
     "Basic Land": new Decimal(10),
+    "Lava Pit": new Decimal(1),
     Bush: new Decimal(3),
     Axe: new Decimal(10),
     Gem: new Decimal(1 * BB_TO_GEM_RATIO),
@@ -48,6 +66,18 @@ export const STATIC_OFFLINE_FARM: GameState = {
     "Water Well": new Decimal(1),
     "Hen House": new Decimal(3),
     Greenhouse: new Decimal(1),
+    "Protective Pesticide": new Decimal(1),
+    "Tornado Pinwheel": new Decimal(1),
+    "Basic Bed": new Decimal(1),
+    "Fisher Bed": new Decimal(1),
+    "Floral Bed": new Decimal(1),
+    "Sturdy Bed": new Decimal(1),
+    "Desert Bed": new Decimal(1),
+    "Cow Bed": new Decimal(1),
+    "Pirate Bed": new Decimal(1),
+    "Royal Bed": new Decimal(1),
+    Mangrove: new Decimal(1),
+    "Thermal Stone": new Decimal(1),
   },
   previousInventory: {
     "Dirt Path": new Decimal(20),
@@ -92,7 +122,9 @@ export const STATIC_OFFLINE_FARM: GameState = {
       },
     },
   },
-  lavaPits: {},
+  lavaPits: {
+    "1": { createdAt: 0, x: -4, y: -6, height: 2, width: 2 },
+  },
 
   fruitPatches: {
     "1": {
@@ -100,13 +132,6 @@ export const STATIC_OFFLINE_FARM: GameState = {
       y: 6,
       width: 2,
       height: 2,
-      fruit: {
-        name: "Banana",
-        plantedAt: 0,
-        amount: 1,
-        harvestsLeft: 1,
-        harvestedAt: 0,
-      },
     },
   },
   gold: {},
@@ -172,9 +197,19 @@ export const STATIC_OFFLINE_FARM: GameState = {
     experience: 100000,
 
     id: 1,
-    skills: {},
+    skills: {
+      "Blooming Boost": 1,
+      "Flower Power": 1,
+      "Instant Gratification": 1,
+      "Instant Growth": 1,
+      "Barnyard Rouse": 1,
+    },
     tokenUri: `1_${tokenUriBuilder(INITIAL_EQUIPMENT)}`,
     achievements: {},
+    previousPowerUseAt: {
+      "Instant Gratification": Date.now() - 1000 * 60,
+      "Instant Growth": Date.now() - 1000 * 60,
+    },
 
     activity: {},
   },
@@ -365,8 +400,8 @@ export const STATIC_OFFLINE_FARM: GameState = {
         id: "123",
         readyAt: 0,
         coordinates: {
-          x: -1,
-          y: 0,
+          x: -3,
+          y: -4,
         },
         createdAt: 0,
       },
@@ -390,6 +425,28 @@ export const STATIC_OFFLINE_FARM: GameState = {
         coordinates: {
           x: 5,
           y: 4,
+        },
+        createdAt: 0,
+      },
+    ],
+    "Hen House": [
+      {
+        id: "123",
+        readyAt: 0,
+        coordinates: {
+          x: 9,
+          y: -2,
+        },
+        createdAt: 0,
+      },
+    ],
+    Barn: [
+      {
+        id: "123",
+        readyAt: 0,
+        coordinates: {
+          x: 5,
+          y: -2,
         },
         createdAt: 0,
       },
@@ -421,7 +478,30 @@ export const STATIC_OFFLINE_FARM: GameState = {
       },
     },
   },
-  collectibles: {},
+  collectibles: {
+    Bale: [
+      {
+        id: "1",
+        createdAt: 0,
+        coordinates: {
+          x: 0,
+          y: 0,
+        },
+        readyAt: 0,
+      },
+    ],
+    "Gold Egg": [
+      {
+        id: "1",
+        createdAt: 0,
+        coordinates: {
+          x: 0,
+          y: 0,
+        },
+        readyAt: 0,
+      },
+    ],
+  },
   pumpkinPlaza: {},
   treasureIsland: {
     holes: {},
@@ -495,8 +575,49 @@ export const STATIC_OFFLINE_FARM: GameState = {
       patterns: [],
     },
   },
-  henHouse: makeAnimalBuilding("Hen House"),
-  barn: makeAnimalBuilding("Barn"),
+  henHouse: {
+    level: 2,
+    animals: {
+      "1": {
+        id: "1",
+        type: "Chicken",
+        state: "idle",
+        createdAt: 0,
+        experience: 120,
+        asleepAt: Date.now() - 1000 * 60 * 60 * 12,
+        awakeAt: Date.now() + 1000 * 60 * 60 * 12,
+        lovedAt: Date.now(),
+        item: "Petting Hand",
+      },
+    },
+  },
+  barn: {
+    level: 2,
+    animals: {
+      "1": {
+        id: "1",
+        type: "Sheep",
+        state: "idle",
+        createdAt: 0,
+        experience: 120,
+        asleepAt: Date.now() - 1000 * 60 * 60 * 12,
+        awakeAt: Date.now() + 1000 * 60 * 60 * 12,
+        lovedAt: Date.now(),
+        item: "Petting Hand",
+      },
+      "2": {
+        id: "2",
+        type: "Cow",
+        state: "idle",
+        createdAt: 0,
+        experience: 120,
+        asleepAt: Date.now() - 1000 * 60 * 60 * 12,
+        awakeAt: Date.now() + 1000 * 60 * 60 * 12,
+        lovedAt: Date.now(),
+        item: "Petting Hand",
+      },
+    },
+  },
   craftingBox: {
     status: "idle",
     startedAt: 0,
