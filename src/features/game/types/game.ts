@@ -10,7 +10,7 @@ import {
 
 import { CollectibleName, CraftableName, Food } from "./craftables";
 import { CommodityName, MushroomName, ResourceName } from "./resources";
-import { SkillName } from "./skills";
+import { LegacyBadgeName } from "./skills";
 import { BuildingName } from "./buildings";
 import { GameEvent } from "../events";
 import { BumpkinItem, Equipped as BumpkinParts } from "./bumpkin";
@@ -381,8 +381,9 @@ export type Bumpkin = {
   skills: Skills;
   achievements?: Partial<Record<AchievementName, number>>;
   activity: Partial<Record<BumpkinActivityName, number>>;
-  previousSkillsResetAt?: number;
+  previousFreeSkillResetAt?: number;
   previousPowerUseAt?: Partial<Record<BumpkinRevampSkillName, number>>;
+  paidSkillResets?: number;
 };
 
 export type SpecialEvent = "Chef Apron" | "Chef Hat";
@@ -440,7 +441,7 @@ export type InventoryItemName =
   | CraftableName
   | CommodityName
   | ResourceName
-  | SkillName
+  | LegacyBadgeName
   | EasterEgg
   | EasterEventItemName
   | Food
@@ -627,9 +628,8 @@ export type PlacedItem = {
   coordinates: { x: number; y: number };
   readyAt: number;
   createdAt: number;
-
+  crafting?: BuildingProduct[];
   oil?: number;
-  crafting?: BuildingProduct;
 };
 
 type ShakeItem = PlacedItem & { shakenAt?: number };
@@ -1339,6 +1339,11 @@ export type LavaPit = {
   collectedAt?: number;
 };
 
+export type VIP = {
+  bundles: { name: VipBundle; boughtAt: number }[];
+  expiresAt: number;
+};
+
 export interface GameState {
   home: Home;
   bank: Bank;
@@ -1352,10 +1357,7 @@ export interface GameState {
   };
 
   calendar: Calendar;
-  vip?: {
-    bundles: { name: VipBundle; boughtAt: number }[];
-    expiresAt: number;
-  };
+  vip?: VIP;
   shipments: {
     restockedAt?: number;
   };
