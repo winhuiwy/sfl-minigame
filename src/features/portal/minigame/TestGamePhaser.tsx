@@ -6,21 +6,21 @@ import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-p
 import { Preloader } from "features/world/scenes/Preloader";
 import { PortalContext } from "./lib/PortalProvider";
 import { useActor } from "@xstate/react";
-import { PortalExampleScene } from "./PortalExampleScene";
+import { TestGameScene } from "./TestGameScene";
 import { NPCModals } from "features/world/ui/NPCModals";
 import { InteractableModals } from "features/world/ui/InteractableModals";
 
-export const PortalExamplePhaser: React.FC = () => {
+export const TestGamePhaser: React.FC = () => {
   const { portalService } = useContext(PortalContext);
   const [portalState] = useActor(portalService);
 
   const game = useRef<Game>();
 
   // This must match the key of your scene [PortalExampleScene]
-  const scene = "portal_example";
+  const scene = "crossy_game";
 
   // Preloader is useful if you want to load the standard Sunflower Land assets + SFX
-  const scenes = [Preloader, PortalExampleScene];
+  const scenes = [Preloader, TestGameScene];
 
   useEffect(() => {
     const config: Phaser.Types.Core.GameConfig = {
@@ -86,15 +86,12 @@ export const PortalExamplePhaser: React.FC = () => {
       <div id="game-content" ref={ref} />
 
       {/* Comment out if you don't want to use our standard Bumpkin NPCs + click interactions */}
-      <NPCModals
-        id={portalState.context.id as number}
-        scene={"portal_example"}
-      />
+      <NPCModals id={portalState.context.id as number} scene={"crossy_game"} />
 
       {/* Comment out if you don't want to use pop up modals from in game interactables */}
       <InteractableModals
         id={portalState.context.id as number}
-        scene="portal_example"
+        scene="crossy_game"
       />
     </div>
   );
