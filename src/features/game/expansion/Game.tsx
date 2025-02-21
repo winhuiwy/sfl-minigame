@@ -78,6 +78,8 @@ import { CompetitionModal } from "features/competition/CompetitionBoard";
 import { SeasonChanged } from "./components/temperateSeason/SeasonChanged";
 import { CalendarEvent } from "./components/temperateSeason/CalendarEvent";
 import { DailyReset } from "../components/DailyReset";
+import { RoninWelcomePack } from "./components/RoninWelcomePack";
+import { ClaimRoninAirdrop } from "./components/onChainAirdrops/ClaimRoninAirdrop";
 
 function camelToDotCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, "$1.$2").toLowerCase() as string;
@@ -149,6 +151,8 @@ const SHOW_MODAL: Record<StateValues, boolean> = {
   sellMarketResource: false,
   somethingArrived: true,
   seasonChanged: false,
+  roninWelcomePack: true,
+  roninAirdrop: true,
 };
 
 // State change selectors
@@ -222,7 +226,9 @@ const hasMarketplaceSales = (state: MachineState) =>
 const isCompetition = (state: MachineState) => state.matches("competition");
 const isSeasonChanged = (state: MachineState) => state.matches("seasonChanged");
 const isCalendarEvent = (state: MachineState) => state.matches("calendarEvent");
-
+const isRoninWelcomePack = (state: MachineState) =>
+  state.matches("roninWelcomePack");
+const isRoninAirdrop = (state: MachineState) => state.matches("roninAirdrop");
 const GameContent: React.FC = () => {
   const { gameService } = useContext(Context);
   useSound("desert", true);
@@ -387,6 +393,8 @@ export const GameWrapper: React.FC = ({ children }) => {
   const competition = useSelector(gameService, isCompetition);
   const seasonChanged = useSelector(gameService, isSeasonChanged);
   const calendarEvent = useSelector(gameService, isCalendarEvent);
+  const roninWelcomePack = useSelector(gameService, isRoninWelcomePack);
+  const roninAirdrop = useSelector(gameService, isRoninAirdrop);
 
   const showPWAInstallPrompt = useSelector(authService, _showPWAInstallPrompt);
 
@@ -594,6 +602,8 @@ export const GameWrapper: React.FC = ({ children }) => {
             {vip && <VIPOffer />}
             {hasSomethingArrived && <SomethingArrived />}
             {hasBBs && <Gems />}
+            {roninWelcomePack && <RoninWelcomePack />}
+            {roninAirdrop && <ClaimRoninAirdrop />}
           </Panel>
         </Modal>
 
@@ -601,7 +611,6 @@ export const GameWrapper: React.FC = ({ children }) => {
         {refundAuction && <RefundAuction />}
         {seasonChanged && <SeasonChanged />}
         {calendarEvent && <CalendarEvent />}
-
         {competition && (
           <Modal show onHide={() => gameService.send("ACKNOWLEDGE")}>
             <CompetitionModal

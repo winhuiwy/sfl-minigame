@@ -83,7 +83,6 @@ import {
   Recipes,
   RecipeWearableName,
 } from "../lib/crafting";
-import { AnimalBuildingLevel } from "../events/landExpansion/upgradeBuilding";
 import { SeasonalCollectibleName } from "./megastore";
 import { TradeFood } from "../events/landExpansion/redeemTradeReward";
 import {
@@ -623,11 +622,19 @@ export type BuildingProduce = {
   readyAt: number;
 };
 
+export type Cancelled = Partial<{
+  [key in InventoryItemName]: {
+    count: number;
+    cancelledAt: number;
+  };
+}>;
+
 export type PlacedItem = {
   id: string;
   coordinates: { x: number; y: number };
   readyAt: number;
   createdAt: number;
+  cancelled?: Cancelled;
   crafting?: BuildingProduct[];
   oil?: number;
 };
@@ -1269,6 +1276,8 @@ type Stores = "factionShop" | "treasureShop" | "megastore";
 export type KeysBought = Record<Stores, KeysBoughtAt>;
 
 export type AnimalBuildingKey = "henHouse" | "barn";
+export type UpgradableBuildingKey = AnimalBuildingKey | "waterWell";
+
 export type AnimalResource =
   | "Egg"
   | "Leather"
@@ -1292,9 +1301,14 @@ export type Animal = {
   reward?: Reward;
 };
 
-export type AnimalBuilding = {
-  level: AnimalBuildingLevel;
+export type AnimalBuilding = UpgradableBuilding & {
   animals: Record<string, Animal>;
+};
+
+export type UpgradableBuilding = {
+  level: number;
+  upgradeReadyAt?: number;
+  upgradedAt?: number;
 };
 
 export type Bank = {
@@ -1343,6 +1357,8 @@ export type VIP = {
   bundles: { name: VipBundle; boughtAt: number }[];
   expiresAt: number;
 };
+
+export type Chain = "ronin";
 
 export interface GameState {
   home: Home;
@@ -1529,6 +1545,7 @@ export interface GameState {
   experiments: ExperimentName[];
   henHouse: AnimalBuilding;
   barn: AnimalBuilding;
+  waterWell: UpgradableBuilding;
 
   craftingBox: {
     status: "pending" | "idle" | "crafting";
@@ -1547,6 +1564,17 @@ export interface GameState {
   };
   season: Season;
   lavaPits: Record<string, LavaPit>;
+  nfts?: Partial<
+    Record<
+      Chain,
+      {
+        name: string;
+        tokenId: number;
+        expiresAt: number;
+        acknowledgedAt?: number;
+      }
+    >
+  >;
 }
 
 export interface Context {

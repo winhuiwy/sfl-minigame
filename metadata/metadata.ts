@@ -10698,7 +10698,7 @@ export const OPEN_SEA_COLLECTIBLES: Record<InventoryItemName, Metadata> = {
       { trait_type: "Boost", value: "Animal" },
       {
         display_type: "boost_number",
-        trait_type: "Barn Capacity",
+        trait_type: "Increase Barn Animals per Upgrade",
         value: 5,
       },
     ],
@@ -11308,6 +11308,18 @@ export const OPEN_SEA_COLLECTIBLES: Record<InventoryItemName, Metadata> = {
     external_url: "https://docs.sunflower-land.com/getting-started/about",
     image: "../public/erc1155/images/question_mark.png",
     name: "Winds of Change Banner",
+  },
+  Jin: {
+    description:
+      "The Mythical Tiger of Ronin, embodies strength, resillence and adventurous spirit",
+    decimals: 0,
+    attributes: [
+      { trait_type: "Purpose", value: "Decoration" },
+      { trait_type: "Tradable", value: "Yes" },
+    ],
+    external_url: "https://docs.sunflower-land.com/getting-started/about",
+    image: "../public/erc1155/images/question_mark.png",
+    name: "Jin",
   },
 };
 
@@ -16819,7 +16831,7 @@ export const OPEN_SEA_WEARABLES: Record<BumpkinItem, Metadata> = {
   },
   "Acorn Hat": {
     description:
-      "A cute, nature-inspired hat shaped like an acorn, perfect for woodland adventures.",
+      "A cute, nature-inspired hat shaped like an acorn, perfect for woodland adventures. +1 Timeshard from Deliveries, Chores & Bounties during Winds of Change Chapter.",
     decimals: 0,
     attributes: [
       { trait_type: "Part", value: "Hat" },
@@ -16990,5 +17002,41 @@ export const OPEN_SEA_WEARABLES: Record<BumpkinItem, Metadata> = {
     external_url: "https://docs.sunflower-land.com/getting-started/about",
     image: "../public/wearables/images/434.png",
     name: "Frozen Heart",
+  },
+  "Love Heart Onesie": {
+    description:
+      "A heart so big, you can wear it! Spread love and coziness wherever you go in this charming onesie.",
+    decimals: 0,
+    attributes: [
+      { trait_type: "Part", value: "Onesie" },
+      { trait_type: "Tradable", value: "Yes" },
+    ],
+    external_url: "https://docs.sunflower-land.com/getting-started/about",
+    image: "../public/wearables/images/435.png",
+    name: "Love Heart Onesie",
+  },
+  "Love Bear Onesie": {
+    description:
+      "Soft, snuggly, and as huggable as a teddy bear, this onesie is a symbol of pure affection and comfort.",
+    decimals: 0,
+    attributes: [
+      { trait_type: "Part", value: "Onesie" },
+      { trait_type: "Tradable", value: "Yes" },
+    ],
+    external_url: "https://docs.sunflower-land.com/getting-started/about",
+    image: "../public/wearables/images/436.png",
+    name: "Love Bear Onesie",
+  },
+  "Flower Bouquet": {
+    description:
+      "A fragrant bundle of fresh-picked blooms, ready to brighten someone's day with the language of flowers.",
+    decimals: 0,
+    attributes: [
+      { trait_type: "Part", value: "Tool" },
+      { trait_type: "Tradable", value: "Yes" },
+    ],
+    external_url: "https://docs.sunflower-land.com/getting-started/about",
+    image: "../public/wearables/images/437.png",
+    name: "Flower Bouquet",
   },
 };

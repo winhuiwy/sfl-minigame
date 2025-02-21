@@ -8,6 +8,7 @@ import {
   getOilConsumption,
   getReadyAt,
 } from "./cook";
+import { EXPIRY_COOLDOWNS } from "features/game/lib/collectibleBuilt";
 
 const GAME_STATE: GameState = {
   ...TEST_FARM,
@@ -1014,6 +1015,166 @@ describe("getReadyAt", () => {
 
     expect(time).toEqual(COOKABLES["Fermented Fish"].cookingSeconds * 0.4);
   });
+
+  it("partial boost if oil is less than cooking required oil", () => {
+    const game = {
+      ...TEST_FARM,
+      buildings: {
+        Deli: [
+          {
+            coordinates: { x: 0, y: 0 },
+            createdAt: Date.now(),
+            id: "1",
+            readyAt: 0,
+            oil: 6,
+          },
+        ],
+      },
+    };
+
+    const boost = getCookingOilBoost("Fermented Carrots", game, "1");
+
+    // Deli consumption is 12 oil per day
+    // Deli boost is 0.4 (40% speed boost, meaning 60% of the original time)
+    // Full boosted time will be 14.4 hours (86400 * 0.6 = 51840 seconds)
+    // With half the oil (6 out of 12), the boost should be half as effective (20% boost)
+    // Expected time = 86400 * 0.8 = 69120 seconds = 19.2 hours
+    expect(boost.timeToCook).toEqual(60 * 60 * 19.2);
+    expect(boost.oilConsumed).toEqual(6);
+  });
+
+  it("does not apply Gourmet Hourglass boost to queued recipe when boost expires before cooking starts", () => {
+    const now = Date.now();
+
+    // First recipe (Boiled Eggs) will finish in 10 seconds
+    const eggReadyAt = now + 10 * 1000;
+
+    // Hourglass expires in 1 second
+    const hourglassCreatedAt =
+      now - (EXPIRY_COOLDOWNS["Gourmet Hourglass"] as number) + 1 * 1000;
+
+    const mashedPotatoCookingTime =
+      COOKABLES["Mashed Potato"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        vip: {
+          bundles: [{ name: "1_MONTH", boughtAt: now }],
+          expiresAt: now + 31 * 24 * 60 * 60 * 1000,
+        },
+        inventory: {
+          Potato: new Decimal(100),
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+              crafting: [
+                {
+                  name: "Boiled Eggs",
+                  readyAt: eggReadyAt,
+                  amount: 1,
+                },
+              ],
+            },
+          ],
+        },
+        collectibles: {
+          "Gourmet Hourglass": [
+            {
+              coordinates: { x: 1, y: 1 },
+              createdAt: hourglassCreatedAt,
+              id: "1",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      action: {
+        type: "recipe.cooked",
+        item: "Mashed Potato",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
+
+    const building = state.buildings["Fire Pit"]?.[0];
+    const queuedRecipe = building?.crafting?.[1];
+
+    // Mashed Potato should start after eggs finish (eggReadyAt)
+    // and cook for the full duration since boost will have expired
+    expect(queuedRecipe?.readyAt).toEqual(eggReadyAt + mashedPotatoCookingTime);
+
+    expect(building?.crafting?.[0]).toEqual({
+      name: "Boiled Eggs",
+      readyAt: eggReadyAt,
+      amount: 1,
+    });
+  });
+
+  it("applies the Gourmet Hourglass boost if the queued recipe will start before the boost expires", () => {
+    const now = Date.now();
+    // Hourglass expires in 30 minutes
+    const hourglassCreatedAt =
+      now - (EXPIRY_COOLDOWNS["Gourmet Hourglass"] as number) + 30 * 60 * 1000;
+    const cookTimeMs = COOKABLES["Boiled Eggs"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        inventory: {
+          Egg: new Decimal(100),
+        },
+        vip: {
+          bundles: [{ name: "1_MONTH", boughtAt: now }],
+          expiresAt: now + 31 * 24 * 60 * 60 * 1000,
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+              crafting: [
+                {
+                  name: "Boiled Eggs",
+                  readyAt: now + 29 * 60 * 1000, // Ready in 29 minutes
+                  amount: 1,
+                },
+              ],
+            },
+          ],
+        },
+        collectibles: {
+          "Gourmet Hourglass": [
+            {
+              coordinates: { x: 1, y: 1 },
+              createdAt: hourglassCreatedAt,
+              id: "1",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      action: {
+        type: "recipe.cooked",
+        item: "Boiled Eggs",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
+
+    const building = state.buildings["Fire Pit"]?.[0];
+    const currentRecipeReadyAt = building?.crafting?.[0]?.readyAt as number;
+    const nextRecipeReadyAt = building?.crafting?.[1]?.readyAt;
+
+    expect(nextRecipeReadyAt).toEqual(currentRecipeReadyAt + cookTimeMs * 0.5);
+  });
 });
 
 describe("getCookingOilBoost", () => {
@@ -1044,31 +1205,179 @@ describe("getCookingOilBoost", () => {
     expect(time).toEqual(60 * 60 * 0.8);
   });
 
-  it("partial boost if oil is less than cooking required oil", () => {
-    const game = {
-      ...TEST_FARM,
-      buildings: {
-        Deli: [
-          {
-            coordinates: { x: 0, y: 0 },
-            createdAt: Date.now(),
-            id: "1",
-            readyAt: 0,
-            oil: 6,
+  it("applies the 50% cooking boost for valid Ronin NFTs", () => {
+    const now = Date.now();
+    const cookTimeMs = COOKABLES["Boiled Eggs"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        inventory: {
+          Egg: new Decimal(100),
+        },
+        nfts: {
+          ronin: {
+            tokenId: 1,
+            name: "Sunflower Land Platinum Pass",
+            expiresAt: now + 31 * 24 * 60 * 60 * 1000,
           },
-        ],
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+            },
+          ],
+        },
       },
-    };
+      action: {
+        type: "recipe.cooked",
+        item: "Boiled Eggs",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
 
-    const boost = getCookingOilBoost("Fermented Carrots", game, "1");
+    const building = state.buildings["Fire Pit"]?.[0];
+    const eggRecipe = building?.crafting?.find((r) => r.name === "Boiled Eggs");
 
-    // Deli consumption is 12 oil per day
-    // Deli boost is 0.4 (40% speed boost, meaning 60% of the original time)
-    // Full boosted time will be 14.4 hours (86400 * 0.6 = 51840 seconds)
-    // With half the oil (6 out of 12), the boost should be half as effective (20% boost)
-    // Expected time = 86400 * 0.8 = 69120 seconds = 19.2 hours
-    expect(boost.timeToCook).toEqual(60 * 60 * 19.2);
-    expect(boost.oilConsumed).toEqual(6);
+    expect(eggRecipe?.readyAt).toEqual(now + cookTimeMs * 0.5);
+  });
+
+  it("does not apply the 50% cooking boost for Bronze Season Pass (Ronin NFT)", () => {
+    const now = Date.now();
+    const cookTimeMs = COOKABLES["Boiled Eggs"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        inventory: {
+          Egg: new Decimal(100),
+        },
+        nfts: {
+          ronin: {
+            tokenId: 1,
+            name: "Sunflower Land Bronze Pass",
+            expiresAt: now + 31 * 24 * 60 * 60 * 1000,
+          },
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      action: {
+        type: "recipe.cooked",
+        item: "Boiled Eggs",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
+
+    const building = state.buildings["Fire Pit"]?.[0];
+    const eggRecipe = building?.crafting?.find((r) => r.name === "Boiled Eggs");
+
+    expect(eggRecipe?.readyAt).toEqual(now + cookTimeMs);
+  });
+
+  it("does not apply the 50% cooking boost to a queue item that starts after the Ronin NFT expires", () => {
+    const now = Date.now();
+    const cookTimeMs = COOKABLES["Boiled Eggs"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        inventory: {
+          Egg: new Decimal(100),
+        },
+        nfts: {
+          ronin: {
+            tokenId: 1,
+            name: "Sunflower Land Platinum Pass",
+            expiresAt: now + cookTimeMs,
+          },
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+              crafting: [
+                {
+                  name: "Boiled Eggs",
+                  readyAt: now + cookTimeMs,
+                  amount: 1,
+                },
+              ],
+            },
+          ],
+        },
+      },
+      action: {
+        type: "recipe.cooked",
+        item: "Boiled Eggs",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
+
+    const building = state.buildings["Fire Pit"]?.[0];
+    const eggRecipe = building?.crafting?.find((r) => r.name === "Boiled Eggs");
+
+    expect(eggRecipe?.readyAt).toEqual(now + cookTimeMs);
+  });
+
+  it("does not apply the 50% cooking boost on an expired Ronin NFT", () => {
+    const now = Date.now();
+    const cookTimeMs = COOKABLES["Boiled Eggs"].cookingSeconds * 1000;
+
+    const state = cook({
+      state: {
+        ...TEST_FARM,
+        inventory: {
+          Egg: new Decimal(100),
+        },
+        nfts: {
+          ronin: {
+            tokenId: 1,
+            name: "Sunflower Land Platinum Pass",
+            expiresAt: now - cookTimeMs,
+          },
+        },
+        buildings: {
+          "Fire Pit": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "1",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      action: {
+        type: "recipe.cooked",
+        item: "Boiled Eggs",
+        buildingId: "1",
+      },
+      createdAt: now,
+    });
+
+    const building = state.buildings["Fire Pit"]?.[0];
+    const eggRecipe = building?.crafting?.find((r) => r.name === "Boiled Eggs");
+
+    expect(eggRecipe?.readyAt).toEqual(now + cookTimeMs);
   });
 });
 

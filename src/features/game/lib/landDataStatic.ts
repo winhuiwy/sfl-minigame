@@ -11,6 +11,7 @@ import {
 import { INITIAL_REWARDS } from "../types/rewards";
 import { Equipped } from "../types/bumpkin";
 import { tokenUriBuilder } from "lib/utils/tokenUriBuilder";
+import { EXPIRY_COOLDOWNS } from "./collectibleBuilt";
 
 export const STATIC_OFFLINE_FARM: GameState = {
   username: "Local Hero",
@@ -22,6 +23,9 @@ export const STATIC_OFFLINE_FARM: GameState = {
     expiresAt: Date.now() + 31 * 24 * 60 * 60 * 1000,
   },
   inventory: {
+    Egg: new Decimal(100),
+    Oil: new Decimal(50),
+    "Golden Sheep": new Decimal(1),
     Potato: new Decimal(100),
     Rhubarb: new Decimal(100),
     "Sunpetal Seed": new Decimal(1),
@@ -351,6 +355,17 @@ export const STATIC_OFFLINE_FARM: GameState = {
   chickens: {},
   trades: {},
   buildings: {
+    Barn: [
+      {
+        id: "123",
+        readyAt: 0,
+        coordinates: {
+          x: -1,
+          y: -8,
+        },
+        createdAt: 0,
+      },
+    ],
     Mansion: [
       {
         id: "123",
@@ -440,17 +455,6 @@ export const STATIC_OFFLINE_FARM: GameState = {
         createdAt: 0,
       },
     ],
-    Barn: [
-      {
-        id: "123",
-        readyAt: 0,
-        coordinates: {
-          x: 5,
-          y: -2,
-        },
-        createdAt: 0,
-      },
-    ],
   },
   crops: {
     "1": {
@@ -479,6 +483,20 @@ export const STATIC_OFFLINE_FARM: GameState = {
     },
   },
   collectibles: {
+    "Gourmet Hourglass": [
+      {
+        id: "1",
+        createdAt:
+          Date.now() -
+          (EXPIRY_COOLDOWNS["Gourmet Hourglass"] as number) +
+          30 * 60 * 1000,
+        coordinates: {
+          x: 3,
+          y: -5,
+        },
+        readyAt: 0,
+      },
+    ],
     Bale: [
       {
         id: "1",
@@ -617,6 +635,9 @@ export const STATIC_OFFLINE_FARM: GameState = {
         item: "Petting Hand",
       },
     },
+  },
+  waterWell: {
+    level: 1,
   },
   craftingBox: {
     status: "idle",

@@ -54,6 +54,11 @@ import {
   RECIPE_UNLOCKS,
 } from "../events/landExpansion/discoverRecipe";
 import { RecipeStack } from "features/island/recipes/RecipeStack";
+import {
+  isBuildingUpgradable,
+  makeUpgradableBuildingKey,
+  UpgradableBuildingType,
+} from "../events/landExpansion/upgradeBuilding";
 
 export const LAND_WIDTH = 6;
 
@@ -81,6 +86,7 @@ type IslandElementArgs = {
   beehives: GameState["beehives"];
   oilReserves: GameState["oilReserves"];
   lavaPits: GameState["lavaPits"];
+  isVisiting: boolean;
 };
 
 const getRecipeLocation = (game: GameState, level: number) => {
@@ -173,6 +179,7 @@ const getIslandElements = ({
   beehives,
   oilReserves,
   lavaPits,
+  isVisiting,
 }: IslandElementArgs) => {
   const mapPlacements: Array<JSX.Element> = [];
 
@@ -184,6 +191,19 @@ const getIslandElements = ({
         return items.map((building, itemIndex) => {
           const { x, y } = building.coordinates;
           const { width, height } = BUILDINGS_DIMENSIONS[name];
+          const buildingKey = makeUpgradableBuildingKey(
+            name as UpgradableBuildingType,
+          );
+
+          const readyAt =
+            !!isBuildingUpgradable(name) && !!game[buildingKey].upgradeReadyAt
+              ? game[buildingKey].upgradeReadyAt
+              : building.readyAt;
+
+          const upgradedAt =
+            !!isBuildingUpgradable(name) && !!game[buildingKey].upgradedAt
+              ? game[buildingKey].upgradedAt
+              : building.createdAt;
 
           return (
             <MapPlacement
@@ -197,8 +217,8 @@ const getIslandElements = ({
                 name={name}
                 id={building.id}
                 index={itemIndex}
-                readyAt={building.readyAt}
-                createdAt={building.createdAt}
+                readyAt={readyAt}
+                createdAt={upgradedAt}
                 showTimers={showTimers}
                 x={x}
                 y={y}
@@ -661,42 +681,44 @@ const getIslandElements = ({
     }),
   );
 
-  const recipeLocations = getRecipeLocations(game);
-  // Group recipes by location, to stop them overlapping
-  const recipeGroups = recipeLocations.reduce(
-    (groups, recipe) => {
-      const key = `${recipe.x},${recipe.y}`;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(recipe);
-      return groups;
-    },
-    {} as Record<
-      string,
-      (Coordinates & {
-        recipe: RecipeItemName;
-      })[]
-    >,
-  );
-
-  Object.entries(recipeGroups).forEach(([key, recipes]) => {
-    const [x, y] = key.split(",").map(Number);
-    mapPlacements.push(
-      <MapPlacement
-        key={`recipe-group-${key}`}
-        x={x}
-        y={y}
-        height={1}
-        width={1}
-      >
-        <RecipeStack
-          key={`recipe-${recipes}`}
-          recipes={recipes.map((r) => r.recipe)}
-        />
-      </MapPlacement>,
+  if (!isVisiting) {
+    const recipeLocations = getRecipeLocations(game);
+    // Group recipes by location, to stop them overlapping
+    const recipeGroups = recipeLocations.reduce(
+      (groups, recipe) => {
+        const key = `${recipe.x},${recipe.y}`;
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(recipe);
+        return groups;
+      },
+      {} as Record<
+        string,
+        (Coordinates & {
+          recipe: RecipeItemName;
+        })[]
+      >,
     );
-  });
+
+    Object.entries(recipeGroups).forEach(([key, recipes]) => {
+      const [x, y] = key.split(",").map(Number);
+      mapPlacements.push(
+        <MapPlacement
+          key={`recipe-group-${key}`}
+          x={x}
+          y={y}
+          height={1}
+          width={1}
+        >
+          <RecipeStack
+            key={`recipe-${recipes}`}
+            recipes={recipes.map((r) => r.recipe)}
+          />
+        </MapPlacement>,
+      );
+    });
+  }
 
   return mapPlacements;
 };
@@ -855,6 +877,7 @@ export const Land: React.FC = () => {
                 beehives,
                 oilReserves,
                 lavaPits,
+                isVisiting: visiting,
               }).sort((a, b) => {
                 if (a.props.canCollide === false) {
                   return -1;
